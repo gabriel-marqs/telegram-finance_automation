@@ -7,19 +7,30 @@ dotenv.config();
 // Inicializa o cliente do Gemini
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-const SYSTEM_INSTRUCTION = `Você é um assistente financeiro pessoal. 
-Sua tarefa é ler ou ouvir a mensagem do usuário e extrair os dados do gasto.
-Retorne SEMPRE a data no formato DD/MM/AAAA. Se o usuário falar "hoje" ou "ontem", calcule a data baseado na data atual.
-Se o usuário não especificar uma data, assuma a data de hoje.
-As categorias permitidas são: Alimentação, Transporte, Saúde, Lazer, Educação, Moradia, Outros.
-Classifique o gasto na categoria que mais fizer sentido.`;
-
 export async function processExpenseWithGemini(
   text: string, 
   audioBuffer?: Buffer, 
   mimeType?: string
 ): Promise<ExpenseData> {
   
+  // Descobre a data e dia da semana atual no fuso do Brasil
+  const hoje = new Date();
+  const dateStr = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+  const dayOfWeek = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'long' });
+
+  const SYSTEM_INSTRUCTION = `Você é um assistente financeiro pessoal.
+Sua tarefa é ler ou ouvir a mensagem do usuário e extrair os dados do gasto.
+
+REGRAS DE DATA:
+- Hoje é ${dayOfWeek}, dia ${dateStr}.
+- Quando o dia não for especificado, considere a data de hoje (${dateStr}).
+- Quando a data for referenciada de forma abstrata ("ontem", "anteontem", "última segunda", "sábado passado"), calcule a data exata no formato DD/MM/AAAA subtraindo os dias a partir de hoje (${dateStr}).
+- Retorne SEMPRE a data no formato DD/MM/AAAA.
+
+REGRAS DE CATEGORIA:
+- Verifique se o gasto se enquadra em uma das seguintes opções: Mercado, Hortifruti, Açougue, Pensão, Creche, Família, Casa, Emergência médica, Delivery, Transporte, Streaming, Cuidado pessoal.
+- Se não for o caso, adicione uma nova categoria descritiva e curta. No entanto, sempre PRIORIZE o que melhor se adequar entre as opções acima.`;
+
   const contents: any[] = [];
 
   // Se houver áudio, adiciona na requisição
