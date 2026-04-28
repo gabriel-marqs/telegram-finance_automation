@@ -12,43 +12,58 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient(supabaseUrl || '', supabaseKey || '');
 
-export interface ExpenseData {
+export interface TransactionData {
+  tipo: 'despesa' | 'receita';
   data: string;
   valor: number;
   categoria: string;
   descricao: string;
 }
 
-export async function insertExpense(expense: ExpenseData) {
-  // Converte a data de DD/MM/AAAA para formato aceito pelo PostgreSQL (YYYY-MM-DD) se necessário,
-  // ou deixa o banco lidar com isso se for texto. Vamos assumir que a coluna no banco
-  // se chama "date" (date), "amount" (numeric), "category" (text), "description" (text).
-  
-  // Tratamento basico da data se vier como DD/MM/AAAA
-  let isoDate = new Date().toISOString().split('T')[0]; // fallback para hoje
-  if (expense.data) {
-    const parts = expense.data.split('/');
+// Função auxiliar para converter data DD/MM/AAAA para YYYY-MM-DD
+function parseDate(dateStr: string): string {
+  let isoDate = new Date().toISOString().split('T')[0];
+  if (dateStr) {
+    const parts = dateStr.split('/');
     if (parts.length === 3) {
       isoDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
     }
   }
+  return isoDate;
+}
 
+export async function insertExpense(expense: TransactionData) {
   const { data, error } = await supabase
     .from('expenses')
-    .insert([
-      {
-        date: isoDate,
-        amount: expense.valor,
-        category: expense.categoria,
-        description: expense.descricao,
-      },
-    ])
+    .insert([{
+      date: parseDate(expense.data),
+      amount: expense.valor,
+      category: expense.categoria,
+      description: expense.descricao,
+    }])
     .select();
 
   if (error) {
-    console.error('Erro ao inserir no Supabase:', error);
+    console.error('Erro ao inserir na tabela expenses:', error);
     throw error;
   }
+  return data;
+}
 
+export async function insertIncome(income: TransactionData) {
+  const { data, error } = await supabase
+    .from('incomes')
+    .insert([{
+      date: parseDate(income.data),
+      amount: income.valor,
+      category: income.categoria,
+      description: income.descricao,
+    }])
+    .select();
+
+  if (error) {
+    console.error('Erro ao inserir na tabela incomes:', error);
+    throw error;
+  }
   return data;
 }

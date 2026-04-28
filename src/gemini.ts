@@ -1,17 +1,17 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import dotenv from 'dotenv';
-import { ExpenseData } from './supabase';
+import { TransactionData } from './supabase';
 
 dotenv.config();
 
 // Inicializa o cliente do Gemini
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-export async function processExpenseWithGemini(
+export async function processTransactionWithGemini(
   text: string, 
   audioBuffer?: Buffer, 
   mimeType?: string
-): Promise<ExpenseData> {
+): Promise<TransactionData> {
   
   // Descobre a data e dia da semana atual no fuso do Brasil
   const hoje = new Date();
@@ -19,7 +19,10 @@ export async function processExpenseWithGemini(
   const dayOfWeek = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'long' });
 
   const SYSTEM_INSTRUCTION = `Você é um assistente financeiro pessoal.
-Sua tarefa é ler ou ouvir a mensagem do usuário e extrair os dados do gasto.
+Sua tarefa é ler ou ouvir a mensagem do usuário e extrair os dados da transação financeira.
+
+REGRAS DE CLASSIFICAÇÃO E TIPO:
+- Identifique se a transação é uma "receita" (recebimentos, ganhos, salários, "me pagaram") ou uma "despesa" (gastos, compras, pagamentos).
 
 REGRAS DE DATA:
 - Hoje é ${dayOfWeek}, dia ${dateStr}.
@@ -28,8 +31,9 @@ REGRAS DE DATA:
 - Retorne SEMPRE a data no formato DD/MM/AAAA.
 
 REGRAS DE CATEGORIA:
-- Verifique se o gasto se enquadra em uma das seguintes opções: Mercado, Hortifruti, Açougue, Pensão, Creche, Família, Casa, Emergência médica, Delivery, Transporte, Streaming, Cuidado pessoal.
-- Se não for o caso, adicione uma nova categoria descritiva e curta. No entanto, sempre PRIORIZE o que melhor se adequar entre as opções acima.`;
+- Se for DESPESA, verifique se se enquadra em: Mercado, Hortifruti, Açougue, Pensão, Creche, Família, Casa, Emergência médica, Delivery, Transporte, Streaming, Cuidado pessoal.
+- Se for RECEITA, verifique se se enquadra em: Salário, Bonificação, Empréstimo, Outros.
+- Se não se encaixar em nenhuma, crie uma categoria nova descritiva e curta, mas SEMPRE PRIORIZE as opções acima se houver adequação.`;
 
   const contents: any[] = [];
 
@@ -47,7 +51,7 @@ REGRAS DE CATEGORIA:
   if (text) {
     contents.push(text);
   } else if (audioBuffer) {
-    contents.push("Extraia o gasto deste áudio.");
+    contents.push("Extraia os dados financeiros deste áudio.");
   }
 
   const response = await ai.models.generateContent({
@@ -59,24 +63,29 @@ REGRAS DE CATEGORIA:
       responseSchema: {
         type: Type.OBJECT,
         properties: {
+          tipo: {
+            type: Type.STRING,
+            description: "Obrigatório: 'despesa' ou 'receita'",
+            enum: ["despesa", "receita"]
+          },
           data: {
             type: Type.STRING,
-            description: "Data do gasto no formato DD/MM/AAAA"
+            description: "Data da transação no formato DD/MM/AAAA"
           },
           valor: {
             type: Type.NUMBER,
-            description: "Valor do gasto em formato numérico (ex: 45.50)"
+            description: "Valor da transação em formato numérico (ex: 45.50)"
           },
           categoria: {
             type: Type.STRING,
-            description: "Categoria do gasto"
+            description: "Categoria da transação"
           },
           descricao: {
             type: Type.STRING,
-            description: "Breve descrição do gasto"
+            description: "Breve descrição da transação"
           }
         },
-        required: ["data", "valor", "categoria", "descricao"]
+        required: ["tipo", "data", "valor", "categoria", "descricao"]
       }
     }
   });
@@ -88,6 +97,6 @@ REGRAS DE CATEGORIA:
   }
 
   // Faz o parse do JSON garantido pelo Gemini
-  const expenseData = JSON.parse(responseText) as ExpenseData;
-  return expenseData;
+  const transactionData = JSON.parse(responseText) as TransactionData;
+  return transactionData;
 }
