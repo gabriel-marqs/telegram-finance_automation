@@ -8,11 +8,11 @@ dotenv.config();
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function processTransactionWithGemini(
-  text: string, 
-  audioBuffer?: Buffer, 
+  text: string,
+  audioBuffer?: Buffer,
   mimeType?: string
 ): Promise<TransactionData> {
-  
+
   // Descobre a data e dia da semana atual no fuso do Brasil
   const hoje = new Date();
   const dateStr = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
@@ -31,7 +31,7 @@ REGRAS DE DATA:
 - Retorne SEMPRE a data no formato DD/MM/AAAA.
 
 REGRAS DE CATEGORIA:
-- Se for DESPESA, verifique se se enquadra em: Mercado, Hortifruti, Açougue, Pensão, Creche, Família, Casa, Emergência médica, Delivery, Transporte, Streaming, Cuidado pessoal.
+- Se for DESPESA, verifique se se enquadra em: Mercado, Hortifruti, Açougue, Pensão, Creche, Família, Casa, Emergência médica, Entreterimento, Delivery, Transporte, Streaming, Cuidado pessoal.
 - Se for RECEITA, verifique se se enquadra em: Salário, Bonificação, Empréstimo, Outros.
 - Se não se encaixar em nenhuma, crie uma categoria nova descritiva e curta, mas SEMPRE PRIORIZE as opções acima se houver adequação.`;
 
@@ -91,7 +91,7 @@ REGRAS DE CATEGORIA:
   });
 
   const responseText = response.text;
-  
+
   if (!responseText) {
     throw new Error("Resposta vazia do Gemini");
   }
