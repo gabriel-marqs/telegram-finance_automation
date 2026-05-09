@@ -31,7 +31,7 @@ REGRAS DE DATA:
 - Retorne SEMPRE a data no formato DD/MM/AAAA.
 
 REGRAS DE CATEGORIA:
-- Se for DESPESA, verifique se se enquadra em: Mercado, Hortifruti, Açougue, Pensão, Creche, Família, Casa, Emergência médica, Entreterimento, Delivery, Transporte, Streaming, Alimentação, Cuidado pessoal.
+- Se for DESPESA, verifique se se enquadra em: Mercado, Hortifruti, Investimento (guardar dinheiro em algum lugar, como poupança, por exemplo), Açougue, Pensão, Creche, Família, Casa, Emergência médica, Dívida (pagamento de empréstimo, empréstimo para terceiros, etc), Entreterimento (jogos, experiências, etc), Delivery, Transporte (cartão de transporte, uber, 99, etc), Streaming, Assinaturas (que não seja streaming), Alimentação (comer fora, restaurante, bares, cafés), Cuidado pessoal (cuidados com a saúde, cosméticos, etc), Outros.
 - Se for RECEITA, verifique se se enquadra em: Salário, Bonificação, Empréstimo, Outros.
 - Se não se encaixar em nenhuma, crie uma categoria nova descritiva e curta, mas SEMPRE PRIORIZE as opções acima se houver adequação.`;
 
