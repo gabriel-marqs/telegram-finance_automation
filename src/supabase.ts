@@ -13,11 +13,11 @@ if (!supabaseUrl || !supabaseKey) {
 export const supabase = createClient(supabaseUrl || '', supabaseKey || '');
 
 export interface TransactionData {
-  tipo: 'despesa' | 'receita';
-  data: string;
-  valor: number;
-  categoria: string;
-  descricao: string;
+  tipo: 'despesa' | 'receita' | 'desfazer';
+  data?: string;
+  valor?: number;
+  categoria?: string;
+  descricao?: string;
 }
 
 // Função auxiliar para converter data DD/MM/AAAA para YYYY-MM-DD
@@ -66,4 +66,58 @@ export async function insertIncome(income: TransactionData) {
     throw error;
   }
   return data;
+}
+
+export async function deleteLastTransaction(): Promise<boolean> {
+  const { data: lastExpense, error: errorExpense } = await supabase
+    .from('expenses')
+    .select('id, created_at')
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  const { data: lastIncome, error: errorIncome } = await supabase
+    .from('incomes')
+    .select('id, created_at')
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  const exp = lastExpense?.[0];
+  const inc = lastIncome?.[0];
+
+  let tableToDelete = '';
+  let idToDelete = null;
+
+  if (exp && inc) {
+    const expenseDate = new Date(exp.created_at);
+    const incomeDate = new Date(inc.created_at);
+    
+    if (expenseDate > incomeDate) {
+      tableToDelete = 'expenses';
+      idToDelete = exp.id;
+    } else {
+      tableToDelete = 'incomes';
+      idToDelete = inc.id;
+    }
+  } else if (exp) {
+    tableToDelete = 'expenses';
+    idToDelete = exp.id;
+  } else if (inc) {
+    tableToDelete = 'incomes';
+    idToDelete = inc.id;
+  }
+
+  if (tableToDelete && idToDelete) {
+    const { error } = await supabase
+      .from(tableToDelete)
+      .delete()
+      .eq('id', idToDelete);
+      
+    if (error) {
+      console.error(`Erro ao deletar de ${tableToDelete}:`, error);
+      throw error;
+    }
+    return true;
+  }
+  
+  return false;
 }

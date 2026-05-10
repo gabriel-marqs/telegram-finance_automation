@@ -23,6 +23,7 @@ Sua tarefa é ler ou ouvir a mensagem do usuário e extrair os dados da transaç
 
 REGRAS DE CLASSIFICAÇÃO E TIPO:
 - Identifique se a transação é uma "receita" (recebimentos, ganhos, salários, "me pagaram") ou uma "despesa" (gastos, compras, pagamentos).
+- Caso o usuário peça para desfazer, excluir, remover, cancelar ou apagar o ÚLTIMO lançamento, o tipo será "desfazer".
 
 REGRAS DE DATA:
 - Hoje é ${dayOfWeek}, dia ${dateStr}.
@@ -65,27 +66,27 @@ REGRAS DE CATEGORIA:
         properties: {
           tipo: {
             type: Type.STRING,
-            description: "Obrigatório: 'despesa' ou 'receita'",
-            enum: ["despesa", "receita"]
+            description: "Obrigatório: 'despesa', 'receita' ou 'desfazer'",
+            enum: ["despesa", "receita", "desfazer"]
           },
           data: {
             type: Type.STRING,
-            description: "Data da transação no formato DD/MM/AAAA"
+            description: "Data da transação no formato DD/MM/AAAA. Opcional para desfazer."
           },
           valor: {
             type: Type.NUMBER,
-            description: "Valor da transação em formato numérico (ex: 45.50)"
+            description: "Valor da transação em formato numérico (ex: 45.50). Opcional para desfazer."
           },
           categoria: {
             type: Type.STRING,
-            description: "Categoria da transação"
+            description: "Categoria da transação. Opcional para desfazer."
           },
           descricao: {
             type: Type.STRING,
-            description: "Breve descrição da transação"
+            description: "Breve descrição da transação. Opcional para desfazer."
           }
         },
-        required: ["tipo", "data", "valor", "categoria", "descricao"]
+        required: ["tipo"]
       }
     }
   });

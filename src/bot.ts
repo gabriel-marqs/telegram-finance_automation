@@ -2,7 +2,7 @@ import { Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 import dotenv from 'dotenv';
 import { processTransactionWithGemini } from './gemini';
-import { insertExpense, insertIncome, TransactionData } from './supabase';
+import { insertExpense, insertIncome, deleteLastTransaction, TransactionData } from './supabase';
 
 dotenv.config();
 
@@ -20,6 +20,17 @@ bot.start((ctx) => {
 async function handleTransaction(ctx: any, transactionData: TransactionData, originalMessageId: number) {
   let resposta = '';
 
+  if (transactionData.tipo === 'desfazer') {
+    const deleted = await deleteLastTransaction();
+    if (deleted) {
+      resposta = `✅ Último lançamento removido com sucesso!`;
+    } else {
+      resposta = `⚠️ Nenhum lançamento encontrado para remover.`;
+    }
+    await ctx.telegram.editMessageText(ctx.chat.id, originalMessageId, undefined, resposta);
+    return;
+  }
+
   if (transactionData.tipo === 'receita') {
     await insertIncome(transactionData);
     resposta = `✅ Recebimento registrado com sucesso!\n\n`;
@@ -29,7 +40,7 @@ async function handleTransaction(ctx: any, transactionData: TransactionData, ori
   }
 
   resposta += `📅 Data: ${transactionData.data}\n` +
-    `💰 Valor: R$ ${transactionData.valor.toFixed(2)}\n` +
+    `💰 Valor: R$ ${transactionData.valor?.toFixed(2)}\n` +
     `📂 Categoria: ${transactionData.categoria}\n` +
     `📝 Descrição: ${transactionData.descricao}`;
     
