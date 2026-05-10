@@ -2,7 +2,7 @@
   "name": "telegram_finance",
   "version": "1.0.0",
   "description": "Telegram bot for finance tracking using Gemini and Supabase",
-  "main": "api/webhook.js",
+  "main": "api/finance/webhook.js",
   "scripts": {},
   "dependencies": {
     "@google/genai": "latest",

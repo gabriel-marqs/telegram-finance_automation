@@ -21,7 +21,7 @@ export interface TransactionData {
 }
 
 // Função auxiliar para converter data DD/MM/AAAA para YYYY-MM-DD
-function parseDate(dateStr: string): string {
+function parseDate(dateStr?: string): string {
   let isoDate = new Date().toISOString().split('T')[0];
   if (dateStr) {
     const parts = dateStr.split('/');
@@ -115,6 +115,64 @@ export async function deleteLastTransaction(): Promise<boolean> {
     if (error) {
       console.error(`Erro ao deletar de ${tableToDelete}:`, error);
       throw error;
+    }
+    return true;
+  }
+  
+  return false;
+}
+
+export interface RunData {
+  tipo: 'treino' | 'desfazer';
+  data?: string; // DD/MM/AAAA
+  distancia_km?: number;
+  duracao_segundos?: number;
+  tipo_treino?: string;
+  pace?: number;
+}
+
+export async function insertRun(run: RunData) {
+  const { data, error } = await supabase
+    .from('running_workouts')
+    .insert([{
+      date: parseDate(run.data),
+      distance_km: run.distancia_km,
+      duration_seconds: run.duracao_segundos,
+      pace: run.pace,
+      type: run.tipo_treino
+    }])
+    .select();
+
+  if (error) {
+    console.error('Erro ao inserir na tabela running_workouts:', error);
+    throw error;
+  }
+  return data;
+}
+
+export async function deleteLastRun(): Promise<boolean> {
+  const { data: lastRun, error } = await supabase
+    .from('running_workouts')
+    .select('id')
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (error) {
+    console.error('Erro ao buscar ultimo treino:', error);
+    throw error;
+  }
+
+  const run = lastRun?.[0];
+
+  if (run) {
+    const { error: delError } = await supabase
+      .from('running_workouts')
+      .delete()
+      .eq('id', run.id);
+      
+    if (delError) {
+      console.error('Erro ao deletar de running_workouts:', delError);
+      throw delError;
     }
     return true;
   }
